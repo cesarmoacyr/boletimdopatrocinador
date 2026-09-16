@@ -3,24 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--
+  Título, descrição, palavras-chave e Open Graph: NÃO ficam ativos quando
+  este arquivo é colado como conteúdo dentro de uma página do WordPress —
+  o WordPress já gera o <head> real da página (via Yoast SEO ou plugin
+  equivalente), que vem ANTES deste bloco no documento final. As tags
+  abaixo acabam "órfãs" (fora do <head> de verdade) e são ignoradas pelo
+  Google. Confirmado testando ao vivo: o <title> e a <meta description>
+  que o Google realmente usa são os do Yoast, não os daqui.
+  → Pra editar título/descrição/OG da página no site real, use os campos
+    do Yoast SEO (aba "Geral" e aba "Social") na edição da página.
+  → As tags abaixo só têm efeito de verdade se este HTML for hospedado
+    como um arquivo independente, fora do WordPress — nesse caso,
+    descomente o bloco.
+
 <title>Boletim do Patrocinador | OnGrace</title>
 <meta name="description" content="Boletim do Patrocinador: a palavra do Missionário R. R. Soares, mensagem de fé sobre a cura de Deus e testemunhos reais de vidas transformadas.">
 <meta name="keywords" content="boletim do patrocinador, Missionário R. R. Soares, Igreja Internacional da Graça de Deus, Show da Fé, testemunhos de fé, mensagem de fé, evangelização mundial">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Boletim do Patrocinador | OnGrace">
+<meta property="og:description" content="Boletim do Patrocinador: a palavra do Missionário R. R. Soares, mensagem de fé sobre a cura de Deus e testemunhos reais de vidas transformadas.">
+<meta property="og:url" content="https://ongrace.com/boletimdopatrocinador/">
+-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-<!--
-  DearFlip (dFlip): o site ongrace.com já tem o plugin "3D FlipBook – DFlip
-  Lite" instalado, que carrega sua própria versão do jQuery + dflip.min.js +
-  CSS em todas as páginas. Por isso NÃO carregamos aqui uma segunda cópia via
-  CDN — isso causava duas versões conflitantes rodando juntas (JS de uma
-  versão sendo estilizado pelo CSS de outra), o que quebrava a barra de
-  ferramentas do flipbook. Usamos o jQuery/DFLIP que o próprio plugin já
-  deixa disponível globalmente na página.
-  Se este arquivo for hospedado num site QUE NÃO tenha esse plugin instalado,
-  descomente as duas linhas de <script> logo antes de </body> (procure por
-  "DearFlip (dFlip) — carregado via CDN") para voltar a usar a versão do CDN.
--->
 <style>
   :root{
     --azul-escuro:#002f4d;
@@ -39,6 +46,19 @@
   }
 
   *{box-sizing:border-box;margin:0;padding:0;}
+
+  /* Esconde visualmente mas mantém acessível a leitores de tela e ao Google
+     — usado nos títulos H1/H2 "estruturais" que não precisam aparecer no
+     design, mas ajudam o SEO a entender a hierarquia da página. */
+  .sr-only{
+    position:absolute;
+    width:1px;height:1px;
+    padding:0;margin:-1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+    border:0;
+  }
 
   html{scroll-behavior:smooth;}
 
@@ -204,10 +224,11 @@
     z-index:1;
     display:grid;
     grid-template-columns:0.85fr 1.15fr;
-    gap:40px;
+    column-gap:40px;
     align-items:center;
   }
-  .hero .eyebrow{color:var(--amarelo);}
+  .hero-text{min-width:0;}
+  .hero .eyebrow{color:var(--amarelo);font-size:20px;}
   .hero h1{
     font-size:56px;
     color:var(--branco);
@@ -218,63 +239,25 @@
     font-size:18px;
     color:rgba(255,255,255,0.88);
     max-width:520px;
-    margin-bottom:32px;
   }
   .hero-actions{
     display:flex;
     justify-content:center;
     gap:14px;
     flex-wrap:wrap;
+    margin-top:28px;
   }
   .btn-doacao-lg{
     padding:20px 44px;
     font-size:17px;
   }
-  .hero-sobre{
-    margin-top:28px;
-  }
+  .hero-sobre{margin-top:28px;}
   .hero-sobre p{
     font-size:14px;
     line-height:1.6;
     color:rgba(255,255,255,0.8);
   }
   .hero-sobre p + p{margin-top:12px;}
-  .hero-passos{
-    display:flex;
-    flex-direction:column;
-    gap:18px;
-    margin-top:36px;
-  }
-  .hero-passo{
-    display:flex;
-    align-items:flex-start;
-    gap:14px;
-  }
-  .hero-passo .num{
-    flex:none;
-    width:32px;height:32px;
-    border-radius:50%;
-    background:var(--branco);
-    color:var(--azul-principal);
-    font-family:var(--fonte-titulo);
-    font-weight:700;
-    font-size:15px;
-    display:flex;align-items:center;justify-content:center;
-  }
-  .hero-passo h4{
-    font-family:var(--fonte-corpo);
-    font-size:15px;
-    font-weight:700;
-    color:var(--branco);
-    margin-bottom:3px;
-  }
-  .hero-passo p a{color:var(--amarelo);text-decoration:underline;}
-  .hero-passo p a:hover{color:var(--branco);}
-  .hero-passo p{
-    font-size:13px;
-    line-height:1.5;
-    color:rgba(255,255,255,0.75);
-  }
 
   .hero-card{
     background:var(--branco);
@@ -316,7 +299,13 @@
     letter-spacing:.03em;
   }
   .hero-preview .preview-placeholder span{font-size:12px;font-weight:600;}
-  #heroFlipbook{width:100%;display:none;}
+  .hero-preview-img{
+    max-width:100%;
+    max-height:400px;
+    margin:0 auto;
+    border-radius:6px;
+    box-shadow:0 8px 20px rgba(0,20,40,0.18);
+  }
   .hero-card h3{font-size:22px;margin-bottom:6px;}
   .hero-card .status-tag{
     display:inline-block;
@@ -359,41 +348,6 @@
   .section-head p{color:var(--texto-secundario);font-size:16px;}
 
   .bg-cinza{background:var(--cinza-claro);}
-
-  /* ---------- Cards de testemunhos ---------- */
-  .testemunhos-grid{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:22px;
-  }
-  .testemunho-card{
-    background:var(--branco);
-    border:1px solid var(--cinza-borda);
-    border-radius:var(--raio);
-    padding:28px 24px;
-    text-align:center;
-    transition:box-shadow .2s ease, transform .2s ease;
-  }
-  .testemunho-card:hover{box-shadow:var(--sombra);transform:translateY(-3px);}
-  .testemunho-foto{
-    width:120px;
-    height:120px;
-    border-radius:18px;
-    margin:0 auto 18px;
-    overflow:hidden;
-    background:linear-gradient(135deg, var(--azul-botao), var(--azul-principal));
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:var(--branco);
-    font-family:var(--fonte-titulo);
-    font-weight:700;
-    font-size:36px;
-    letter-spacing:.02em;
-  }
-  .testemunho-foto img{width:100%;height:100%;object-fit:cover;display:block;}
-  .testemunho-nome{font-size:16px;margin-bottom:10px;text-transform:none;}
-  .testemunho-texto{font-size:14px;color:var(--texto-secundario);line-height:1.6;}
 
   /* ---------- Boletim / PDF section ---------- */
   .boletim-section{
@@ -516,71 +470,6 @@
   .footer-bottom a{color:rgba(255,255,255,0.55);}
   .footer-bottom a:hover{color:var(--amarelo);}
 
-  /* ---------- Visualizador de PDF (modal em tela cheia) ---------- */
-  .pdf-modal{
-    position:fixed;
-    inset:0;
-    z-index:1000;
-    background:rgba(0,20,35,0.94);
-    display:none;
-    flex-direction:column;
-  }
-  .pdf-modal.open{display:flex;}
-  .pdf-modal-bar{
-    flex:none;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    padding:10px 16px;
-    background:var(--azul-escuro);
-    color:var(--branco);
-  }
-  .pdf-modal-hint{
-    font-size:13px;
-    color:rgba(255,255,255,0.85);
-    display:flex;
-    align-items:center;
-    gap:6px;
-  }
-  .pdf-modal-actions{display:flex;align-items:center;gap:10px;}
-  .pdf-modal-download{
-    font-size:12px;
-    font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:.03em;
-    color:var(--branco);
-    padding:8px 14px;
-    border-radius:6px;
-    background:rgba(255,255,255,0.12);
-  }
-  .pdf-modal-download:hover{background:rgba(255,255,255,0.22);}
-  .pdf-modal-close{
-    flex:none;
-    width:36px;height:36px;
-    border-radius:8px;
-    border:none;
-    background:rgba(255,255,255,0.12);
-    color:var(--branco);
-    font-size:18px;
-    line-height:1;
-    cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-  }
-  .pdf-modal-close:hover{background:rgba(255,255,255,0.22);}
-  .pdf-modal-frame{
-    position:relative;
-    flex:1;
-    width:100%;
-    border:0;
-    background:#2b2f31;
-    overflow:hidden;
-  }
-  @media (max-width:600px){
-    .pdf-modal-hint{font-size:11.5px;}
-    .pdf-modal-download{padding:7px 10px;font-size:11px;}
-  }
-
   /* ---------- Botão voltar ao topo ---------- */
   .back-to-top{
     position:fixed;
@@ -613,8 +502,8 @@
   /* ---------- Responsivo ---------- */
   @media (max-width:960px){
     .hero-inner{grid-template-columns:1fr;}
+    .hero-card{margin-top:28px;}
     .hero h1{font-size:44px;}
-    .testemunhos-grid{grid-template-columns:repeat(2,1fr);}
     .edicoes-grid{grid-template-columns:repeat(2,1fr);}
     .footer-grid{grid-template-columns:1fr 1fr;}
     .footer-grid .footer-col:first-child{grid-column:1 / -1;}
@@ -676,8 +565,6 @@
     .section-head h2{font-size:28px;}
     .boletim-section .eyebrow{font-size:20px;}
 
-    .testemunhos-grid{grid-template-columns:1fr;}
-
     .edicoes-grid{grid-template-columns:1fr;}
     .edicao-card{flex-direction:column;text-align:center;padding:22px;}
     .edicao-preview{width:120px;height:168px;}
@@ -712,7 +599,6 @@
     </button>
 
     <nav class="top-nav" id="topNav">
-      <a href="#testemunhos">Testemunhos</a>
       <a href="#boletim" class="btn btn-primary">Edições</a>
     </nav>
   </div>
@@ -720,39 +606,19 @@
 
 <section class="hero">
   <div class="container hero-inner">
-    <div>
-      <span class="eyebrow">Seu informativo mensal</span>
-      <h1>Boletim do Patrocinador</h1>
-      <p class="lead">Este informativo mensal é para você, que apoia o avanço da Igreja pelo mundo com o objetivo de proclamar as Boas-Novas, obedecendo ao chamado de Deus: E disse-lhes: Ide por todo o mundo, pregai o evangelho a toda criatura (Marcos 16.15).</p>
+    <div class="hero-text">
+      <div class="hero-intro">
+        <h1 class="sr-only">Boletim do Patrocinador</h1>
+        <span class="eyebrow">Seu informativo mensal</span>
+        <p class="lead">Este informativo mensal é para você, que apoia o avanço da Igreja pelo mundo com o objetivo de proclamar as Boas-Novas, obedecendo ao chamado de Deus: <em>E disse-lhes: Ide por todo o mundo, pregai o evangelho a toda criatura</em> (Marcos 16.15).</p>
+      </div>
+
+      <div class="hero-sobre">
+        <p>Neste informativo, você terá acesso a uma mensagem de fé do Missionário R. R. Soares, histórias reais de pessoas com a vida transformada pela sua oferta, além de um estudo bíblico, que vai abençoar a sua vida.</p>
+        <p>Você faz parte desta missão desenvolvido pela IIGD e contribui diretamente, para que a mensagem do Evangelho alcance cada vez mais vidas.</p>
+      </div>
       <div class="hero-actions">
         <a href="https://ongrace.com/doacao/" target="_blank" rel="noopener" class="btn btn-doacao btn-doacao-lg">❤ Doações</a>
-      </div>
-      <div class="hero-sobre">
-        <p>Você faz parte desta missão desenvolvido pela IIGD e contribui diretamente, para que a mensagem do Evangelho alcance cada vez mais vidas.</p>
-        <p>Por isso, neste informativo mensal, você terá acesso a uma mensagem de fé do Missionário R. R. Soares, histórias reais de pessoas com a vida transformada pela sua oferta, além de um estudo bíblico, que vai abençoar a sua vida.</p>
-      </div>
-      <div class="hero-passos">
-        <div class="hero-passo">
-          <span class="num">1</span>
-          <div>
-            <h4>Publicação mensal (1 Tessalonicenses 5.11)</h4>
-            <p>Todo mês, uma nova edição do <strong>Boletim do Patrocinador</strong> é disponibilizada nesta página.</p>
-          </div>
-        </div>
-        <div class="hero-passo">
-          <span class="num">2</span>
-          <div>
-            <h4>Conte-nos a sua história (Gálatas 6.10)</h4>
-            <p>Você também pode nos enviar o seu testemunho por meio do <a href="https://wa.me/552121413510" target="_blank" rel="noopener">WhatsApp</a>.</p>
-          </div>
-        </div>
-        <div class="hero-passo">
-          <span class="num">3</span>
-          <div>
-            <h4>Acompanhe o impacto (1 João 3.17)</h4>
-            <p>Veja, como sua contribuição tem transformado vidas.</p>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -762,10 +628,10 @@
           <div class="pdf-badge">PDF</div>
           <span>Pré-visualização em breve</span>
         </div>
-        <div id="heroFlipbook"></div>
+        <img class="hero-preview-img" id="heroPreviewImg" alt="" style="display:none;">
       </div>
       <h3>Edição de <span id="heroMesAtual">—</span></h3>
-      <p>Leia a edição mais recente do Boletim do Patrocinador direto aqui ou baixe o PDF.</p>
+      <p>Leia a edição mais recente do Boletim do Patrocinador direto aqui.</p>
       <div class="btn-row" id="heroBtnRow">
         <a href="#" class="btn btn-primary disabled" id="heroBtnVisualizar" aria-disabled="true" onclick="return false;">Visualizar</a>
         <a href="#" class="btn btn-outline edicao-btn-outline disabled" id="heroBtnBaixar" aria-disabled="true" onclick="return false;">Baixar</a>
@@ -775,33 +641,11 @@
   </div>
 </section>
 
-<section id="testemunhos">
-  <div class="container">
-    <div class="section-head">
-      <span class="eyebrow">Testemunhos</span>
-      <h2>Vidas transformadas</h2>
-      <p>Pessoas com vidas transformadas por meio do programa e/ou outros testemunhos de patrocinadores.</p>
-    </div>
-
-    <div class="testemunhos-grid" id="testemunhosGrid"></div>
-
-    <!--
-      COMO ADICIONAR/ATUALIZAR TESTEMUNHOS:
-      Edite o array "testemunhos" lá no final do arquivo (dentro da tag <script>).
-      1. Adicione quantos quiser (até uns 20) seguindo o mesmo formato:
-         { nome: 'Nome da pessoa', foto: 'fotos/nome.jpg', texto: 'O testemunho aqui.' },
-      2. Enquanto não tiver a foto, deixe foto: null — o card mostra as
-         iniciais do nome no lugar (ex.: "MN" para Maria Nair).
-      3. A cada carregamento da página, 3 testemunhos são sorteados
-         aleatoriamente entre todos os cadastrados.
-    -->
-  </div>
-</section>
-
 <section id="boletim" class="boletim-section">
   <div class="container">
     <div class="section-head">
       <span class="eyebrow">Edições</span>
+      <h2 class="sr-only">Edições do Boletim do Patrocinador</h2>
       <p>Confira abaixo todas as edições do Boletim do Patrocinador e veja o que Deus fez através da sua contribuição.</p>
     </div>
 
@@ -810,16 +654,16 @@
     <!--
       COMO ADICIONAR/ATUALIZAR UMA EDIÇÃO:
       Edite o array "edicoes" lá no final do arquivo (dentro da tag <script>).
-      1. Suba o arquivo PDF (ex: boletim-2026-09.pdf) na mesma pasta deste HTML
-         (ou numa subpasta, ex: "boletins/boletim-2026-09.pdf").
+      1. Suba o arquivo PDF na Biblioteca de Mídia do WordPress e copie a URL gerada.
       2. Adicione uma nova linha no TOPO do array "edicoes", ex:
-         { mes: 8, ano: 2026, arquivo: 'boletins/boletim-2026-09.pdf' },
+         { mes: 8, ano: 2026, arquivo: 'https://ongrace.com/wp-content/uploads/.../boletim.pdf', capa: 'https://ongrace.com/wp-content/uploads/.../capa.jpg' },
          (mes: 0 = janeiro ... 11 = dezembro)
       3. Enquanto o arquivo não estiver pronto, deixe arquivo: null — o card
          aparece automaticamente como "Em breve" e os botões ficam desativados.
       4. A edição do TOPO do array também vira o destaque no topo da página
-         (card do hero), com um flipbook 3D (plugin DearFlip) para folhear
-         o PDF direto ali, além dos botões Visualizar/Baixar.
+         (card do hero), mostrando a capa e os botões Visualizar/Baixar. O
+         botão "Visualizar" abre o PDF direto numa nova aba (visualizador
+         nativo do navegador/dispositivo) — sem plugin nenhum.
       5. Uso interno: a publicação é sempre feita todo dia 20 de cada mês,
          mas essa informação não aparece para o público na página.
     -->
@@ -846,7 +690,6 @@
       <div class="footer-col">
         <h5>Navegação</h5>
         <ul>
-          <li><a href="#testemunhos">Testemunhos</a></li>
           <li><a href="#boletim">Edições</a></li>
           <li><a href="https://ongrace.com" target="_blank" rel="noopener">Site oficial</a></li>
         </ul>
@@ -856,7 +699,6 @@
         <ul>
           <li><a href="mailto:contato@ongrace.com">contato@ongrace.com</a></li>
           <li><a href="tel:+552121413510">+55 21 2141-3510</a></li>
-          <li><a href="tel:+551131819022">+55 11 3181-9022</a></li>
         </ul>
       </div>
     </div>
@@ -867,37 +709,7 @@
   </div>
 </footer>
 
-<div class="pdf-modal" id="pdfModal" role="dialog" aria-modal="true" aria-label="Visualizador do boletim em PDF">
-  <div class="pdf-modal-bar">
-    <span class="pdf-modal-hint">💡 Dica: use dois dedos para dar zoom na leitura</span>
-    <div class="pdf-modal-actions">
-      <button type="button" class="pdf-modal-close" id="pdfModalClose" aria-label="Fechar visualizador">✕</button>
-    </div>
-  </div>
-  <div id="pdfFrame" class="pdf-modal-frame"></div>
-</div>
-
 <button type="button" class="back-to-top" id="backToTop" aria-label="Voltar ao topo">↑</button>
-
-<!--
-  DearFlip (dFlip) — carregado via CDN. Comentado porque o ongrace.com já
-  tem o plugin "3D FlipBook – DFlip Lite" instalado, que disponibiliza
-  jQuery + DFLIP globalmente em toda página. Carregar os dois juntos criava
-  duas versões conflitantes (JS de uma, CSS de outra) e quebrava a barra de
-  ferramentas do flipbook. Só descomente estas duas linhas se hospedar este
-  arquivo num site SEM esse plugin instalado.
-<script src="https://cdn.jsdelivr.net/npm/@dearhive/dearflip-jquery-flipbook@1.7.3/dflip/js/libs/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@dearhive/dearflip-jquery-flipbook@1.7.3/dflip/js/dflip.min.js"></script>
--->
-<script>
-  // Confere se o jQuery + DFLIP já estão disponíveis na página (plugin do
-  // WordPress). Se não estiverem (ex.: site sem o plugin instalado), avisa
-  // no console em vez de quebrar silenciosamente — nesse caso, descomente
-  // o bloco de CDN logo acima.
-  if (!window.jQuery || !window.jQuery.fn.flipBook) {
-    console.warn('DearFlip/jQuery não encontrados na página. Se este site não tiver o plugin "3D FlipBook – DFlip Lite" instalado, descomente o bloco de <script> do CDN no HTML.');
-  }
-</script>
 
 <script>
   // Menu mobile
@@ -927,6 +739,33 @@
   window.addEventListener('resize', ajustarMenu);
   window.addEventListener('load', ajustarMenu);
 
+  // No mobile, o card da edição entra entre o texto de abertura e os 2
+  // parágrafos seguintes; no desktop, ele fica na coluna ao lado. Faz isso
+  // movendo o elemento no DOM (em vez de usar grid-template-areas), porque
+  // o CSS Grid infla a altura da linha do meio quando um item atravessa
+  // várias linhas nomeadas — e a altura do card só é definida por JS depois
+  // que a página carrega, causando um espaço vazio que só aparecia depois
+  // do carregamento completo.
+  const heroInner = document.querySelector('.hero-inner');
+  const heroText = document.querySelector('.hero-text');
+  const heroIntro = document.querySelector('.hero-intro');
+  const heroCardEl = document.querySelector('.hero-card');
+  function ajustarOrdemHero(){
+    if (!heroInner || !heroText || !heroIntro || !heroCardEl) return;
+    const mobile = window.matchMedia('(max-width:960px)').matches;
+    if (mobile) {
+      if (heroCardEl.parentElement !== heroText) {
+        heroIntro.after(heroCardEl);
+      }
+    } else {
+      if (heroCardEl.parentElement !== heroInner) {
+        heroInner.appendChild(heroCardEl);
+      }
+    }
+  }
+  ajustarOrdemHero();
+  window.addEventListener('resize', ajustarOrdemHero);
+
   // Botão voltar ao topo
   const backToTop = document.getElementById('backToTop');
   window.addEventListener('scroll', () => {
@@ -935,104 +774,6 @@
   backToTop.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
-
-  // ---------- Visualizador de PDF (tela cheia, com zoom) ----------
-  // Abre o PDF dentro da própria página com o mesmo flipbook (DearFlip) usado
-  // na hero, em vez de um <iframe> apontando pro PDF. Um <iframe> com PDF
-  // não renderiza no Safari do iPhone/iPad (limitação conhecida do WebKit —
-  // fica com a tela em branco/cinza) e também pode falhar em navegadores
-  // embutidos (WhatsApp, Instagram, Facebook). O flipbook usa canvas/WebGL,
-  // então funciona de forma consistente em qualquer navegador, com zoom e
-  // navegação de página já embutidos nos próprios controles dele.
-  const pdfModal = document.getElementById('pdfModal');
-  const pdfFrame = document.getElementById('pdfFrame');
-  const pdfModalClose = document.getElementById('pdfModalClose');
-
-  function abrirVisualizador(url){
-    pdfModal.classList.add('open');
-    document.body.style.overflow = 'hidden';
-
-    const barHeight = document.querySelector('.pdf-modal-bar').offsetHeight;
-    const alturaDisponivel = window.innerHeight - barHeight;
-
-    jQuery(pdfFrame).empty();
-    jQuery(pdfFrame).flipBook(url, {
-      webgl: true,
-      height: alturaDisponivel,
-      backgroundColor: '#2b2f31',
-      soundEnable: false,
-      autoEnableOutline: false
-    });
-  }
-  function fecharVisualizador(){
-    pdfModal.classList.remove('open');
-    jQuery(pdfFrame).empty();
-    document.body.style.overflow = '';
-  }
-  pdfModalClose.addEventListener('click', fecharVisualizador);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharVisualizador(); });
-
-  // ---------- Testemunhos ----------
-  // Cadastre aqui todos os testemunhos (recomendado: até uns 20). A cada
-  // carregamento da página, 3 são sorteados aleatoriamente entre todos os
-  // cadastrados. foto: null enquanto não tiver a imagem da pessoa — o card
-  // mostra as iniciais do nome no lugar (ex.: "MN" para Maria Nair).
-  const testemunhos = [
-    {
-      nome: 'Maria',
-      foto: 'https://ongrace.com/wp-content/uploads/2026/08/foto-maria-nair.jpg',
-      texto: 'Conheceu Jesus por meio do programa Show da Fé aos 63 anos. "Entendi que era importante que o programa continuasse no ar, então decidi me tornar patrocinadora." Maria nunca mais saiu da presença do Senhor. <strong>— Osasco/SP</strong>'
-    },
-    {
-      nome: 'Luan e Jussara',
-      foto: 'https://ongrace.com/wp-content/uploads/2026/08/foto-luan-jussara.jpg',
-      texto: 'Começaram a orar pelo sonho da casa própria, e Jussara decidiu se tornar patrocinadora do programa Show da Fé, com o propósito de conquistar a tão almejada moradia. <strong>— Santa Rita/PB</strong>'
-    },
-    {
-      nome: 'Idelma',
-      foto: 'https://ongrace.com/wp-content/uploads/2026/08/foto-idelma.jpg',
-      texto: 'Tomava medicamentos fortes para tentar manter o equilíbrio mental. Após assistir ao programa Show da Fé durante a madrugada, teve sua vida transformada e foi curada: "Tomei posse da Palavra e determinei, junto com o Missionário, a minha cura!" <strong>— Delmiro Gouveia/AL</strong>'
-    },
-    {
-      nome: 'Simona',
-      foto: 'https://ongrace.com/wp-content/uploads/2026/08/foto-simona.jpg',
-      texto: 'Mora na Alemanha e foi alcançada pela mensagem: "Desde os meus 14 anos, sofria com uma doença que se espalhava pelo meu corpo. Entrei em contato com a sua equipe por meio de mensagens pelo WhatsApp. Enviei fotos para que pudessem ver como eu estava. Vocês oraram e me enviaram um áudio, abençoando a mim e à minha família. A partir daquele momento, a doença começou a ser curada." <strong>— Alemanha/GER</strong>'
-    }
-  ];
-
-  function iniciaisDoNome(nome){
-    return nome.trim().split(/\s+/).slice(0, 2).map(p => p[0].toUpperCase()).join('');
-  }
-
-  function sortearTestemunhos(lista, quantidade){
-    const copia = lista.slice();
-    for (let i = copia.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copia[i], copia[j]] = [copia[j], copia[i]];
-    }
-    return copia.slice(0, quantidade);
-  }
-
-  function renderTestemunhos(){
-    const grid = document.getElementById('testemunhosGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    const escolhidos = sortearTestemunhos(testemunhos, Math.min(3, testemunhos.length));
-    escolhidos.forEach(t => {
-      const card = document.createElement('div');
-      card.className = 'testemunho-card';
-      const fotoHtml = t.foto
-        ? `<img src="${t.foto}" alt="Foto de ${t.nome}">`
-        : iniciaisDoNome(t.nome);
-      card.innerHTML = `
-        <div class="testemunho-foto">${fotoHtml}</div>
-        <h3 class="testemunho-nome">${t.nome}</h3>
-        <p class="testemunho-texto">${t.texto}</p>`;
-      grid.appendChild(card);
-    });
-  }
-
-  renderTestemunhos();
 
   // ---------- Edições do boletim ----------
   // Adicione uma edição nova sempre no TOPO da lista (a mais recente primeiro).
@@ -1044,13 +785,16 @@
   // genérico no lugar. Suba a imagem na Biblioteca de Mídia do WordPress
   // (igual já fez com o PDF) e cole aqui a URL que o WordPress gerar.
   const edicoes = [
-    { mes: 7, ano: 2026, arquivo: 'https://ongrace.com/wp-content/uploads/2026/08/boletim-do-patrocinador-agosto-2026.pdf', capa: 'https://ongrace.com/wp-content/uploads/2026/08/capa-boletim-2026-08.jpg' }, // Agosto/2026 (mes: 0=janeiro ... 11=dezembro)
+    { mes: 8, ano: 2026, arquivo: 'https://ongrace.com/wp-content/uploads/2026/09/boletim-do-patrocinador-setembro-2026.pdf', capa: 'https://ongrace.com/wp-content/uploads/2026/09/capa-boletim-2026-09.jpg' }, // Setembro/2026 (mes: 0=janeiro ... 11=dezembro)
+    { mes: 7, ano: 2026, arquivo: 'https://ongrace.com/wp-content/uploads/2026/08/boletim-do-patrocinador-agosto-2026.pdf', capa: 'https://ongrace.com/wp-content/uploads/2026/08/capa-boletim-2026-08.jpg' }, // Agosto/2026
   ];
 
   const nomesMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
   // Gera o(s) botão(ões) "Visualizar" / "Baixar" para uma edição.
   // Passe incluirBaixar:false para gerar só o botão "Visualizar" (usado na hero).
+  // "Visualizar" abre o PDF direto numa nova aba, usando o visualizador nativo
+  // do navegador/dispositivo — sem plugin nenhum.
   function criarBotoes(ed, label, incluirBaixar){
     if (incluirBaixar === undefined) incluirBaixar = true;
     const disponivel = !!ed.arquivo;
@@ -1058,7 +802,7 @@
     const nomeArquivo = 'Boletim-do-Patrocinador-' + label.replace('/', '-') + '.pdf';
     const btnVisualizar = `
       <a href="${arquivoSeguro}" class="btn btn-primary${disponivel ? '' : ' disabled'}"
-         ${disponivel ? `onclick="abrirVisualizador('${arquivoSeguro}', '${nomeArquivo}'); return false;"` : 'aria-disabled="true" onclick="return false;"'}>Visualizar</a>`;
+         ${disponivel ? `target="_blank" rel="noopener"` : 'aria-disabled="true" onclick="return false;"'}>Visualizar</a>`;
     if (!incluirBaixar) return btnVisualizar;
     return btnVisualizar + `
       <a href="${arquivoSeguro}" class="btn btn-outline edicao-btn-outline${disponivel ? '' : ' disabled'}"
@@ -1096,49 +840,25 @@
 
       document.getElementById('heroMesAtual').textContent = labelUltima;
 
-      // Prévia em destaque: flipbook 3D (DearFlip) quando há PDF, placeholder quando não há
+      // Prévia em destaque: mostra a capa (imagem) quando há PDF, placeholder quando não há
       const heroPreviewPlaceholder = document.getElementById('heroPreviewPlaceholder');
-      const heroFlipbookEl = document.getElementById('heroFlipbook');
+      const heroPreviewImg = document.getElementById('heroPreviewImg');
 
-      if (disponivel) {
+      if (disponivel && ultima.capa) {
         heroPreviewPlaceholder.style.display = 'none';
-        heroFlipbookEl.style.display = 'block';
-        if (window.jQuery && jQuery.fn.flipBook && heroFlipbookEl.dataset.src !== ultima.arquivo) {
-          jQuery('#heroFlipbook').empty();
-          // Altura calculada a partir da largura real do card (proporção de
-          // página única, tipo A4) — evita sobra de espaço vazio embaixo da
-          // capa em cards mais estreitos, que fazia a barra de ferramentas
-          // "flutuar" separada da página e parecer cortada/truncada.
-          const larguraPreview = document.getElementById('heroPreview').clientWidth || 400;
-          const alturaFlip = Math.min(Math.round(larguraPreview * 1.32), 620);
-          jQuery('#heroFlipbook').flipBook(ultima.arquivo, {
-            webgl: true,
-            height: alturaFlip,
-            pageMode: 'single',
-            backgroundColor: '#eef3f8',
-            soundEnable: false,
-            autoEnableOutline: false,
-            duration: 700
-          });
-          heroFlipbookEl.dataset.src = ultima.arquivo;
-        }
+        heroPreviewImg.src = ultima.capa;
+        heroPreviewImg.alt = 'Capa do boletim de ' + labelUltima;
+        heroPreviewImg.style.display = 'block';
       } else {
         heroPreviewPlaceholder.style.display = 'flex';
-        heroFlipbookEl.style.display = 'none';
+        heroPreviewImg.style.display = 'none';
       }
 
       document.getElementById('heroBtnRow').innerHTML = criarBotoes(ultima, labelUltima, false);
     }
   }
 
-  // Aguarda o $(document).ready() do próprio DearFlip (registrado antes deste
-  // script) rodar primeiro, pois é nele que o plugin calcula o caminho da
-  // pasta "dflip/" para carregar seus arquivos internos (three.min.js, sons
-  // etc.). Chamar o flipbook antes disso fazia ele buscar os arquivos no
-  // lugar errado.
-  jQuery(document).ready(function () {
-    renderEdicoes();
-  });
+  renderEdicoes();
 
   document.getElementById('anoAtual').textContent = new Date().getFullYear();
 </script>
