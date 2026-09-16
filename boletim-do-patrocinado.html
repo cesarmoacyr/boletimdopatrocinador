@@ -962,10 +962,30 @@
       const alturaDisponivel = pdfFrame.clientHeight - 32;
       const viewportBase = page.getViewport({ scale: 1 });
       const escala = Math.min(larguraDisponivel / viewportBase.width, alturaDisponivel / viewportBase.height);
-      const viewport = page.getViewport({ scale: escala > 0 ? escala : 1 });
-      pdfCanvas.width = viewport.width;
-      pdfCanvas.height = viewport.height;
-      page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function () {
+      // viewportTela: tamanho exibido na página (CSS px) — usado pro layout e
+      // pra posicionar os links por cima.
+      const viewportTela = page.getViewport({ scale: escala > 0 ? escala : 1 });
+
+      // O canvas é desenhado numa resolução bem maior que o tamanho exibido,
+      // senão ao dar pinça pra dar zoom (mobile) o navegador só estica os
+      // pixels que já existem e o texto fica borrado/ilegível. Rendeiriza em
+      // alta resolução e depois encolhe visualmente via CSS (width/height).
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+      let escalaRender = (escala > 0 ? escala : 1) * dpr * 2.5;
+      const viewportTeste = page.getViewport({ scale: escalaRender });
+      const dimensaoMax = 2800;
+      if (viewportTeste.width > dimensaoMax || viewportTeste.height > dimensaoMax) {
+        const fatorAjuste = Math.min(dimensaoMax / viewportTeste.width, dimensaoMax / viewportTeste.height);
+        escalaRender = escalaRender * fatorAjuste;
+      }
+      const viewportRender = page.getViewport({ scale: escalaRender });
+
+      pdfCanvas.width = viewportRender.width;
+      pdfCanvas.height = viewportRender.height;
+      pdfCanvas.style.width = viewportTela.width + 'px';
+      pdfCanvas.style.height = viewportTela.height + 'px';
+
+      page.render({ canvasContext: ctx, viewport: viewportRender }).promise.then(function () {
         pdfRenderizando = false;
         if (pdfProximaPendente !== null) {
           const proxima = pdfProximaPendente;
@@ -973,7 +993,7 @@
           renderizarPaginaPdf(proxima);
         }
       });
-      renderizarLinksPdf(page, viewport);
+      renderizarLinksPdf(page, viewportTela);
     });
     atualizarNavPdf();
   }
