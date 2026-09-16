@@ -551,9 +551,24 @@
     justify-content:center;
     padding:16px;
   }
+  .pdf-page-wrap{
+    position:relative;
+    line-height:0;
+  }
   .pdf-modal-frame canvas{
     max-width:100%;
     box-shadow:0 8px 30px rgba(0,0,0,0.45);
+  }
+  .pdf-link-layer{
+    position:absolute;
+    top:0;left:0;
+    pointer-events:none;
+  }
+  .pdf-link-layer a{
+    position:absolute;
+    display:block;
+    pointer-events:auto;
+    cursor:pointer;
   }
   @media (max-width:600px){
     .pdf-modal-hint{font-size:11.5px;}
@@ -810,7 +825,10 @@
     <button type="button" class="pdf-modal-close" id="pdfModalClose" aria-label="Fechar visualizador">✕</button>
   </div>
   <div class="pdf-modal-frame" id="pdfFrame">
-    <canvas id="pdfCanvas"></canvas>
+    <div class="pdf-page-wrap" id="pdfPageWrap">
+      <canvas id="pdfCanvas"></canvas>
+      <div class="pdf-link-layer" id="pdfLinkLayer"></div>
+    </div>
   </div>
 </div>
 
@@ -894,6 +912,7 @@
   const pdfModalClose = document.getElementById('pdfModalClose');
   const pdfCanvas = document.getElementById('pdfCanvas');
   const pdfFrame = document.getElementById('pdfFrame');
+  const pdfLinkLayer = document.getElementById('pdfLinkLayer');
   const pdfPageInfo = document.getElementById('pdfPageInfo');
   const pdfPrevBtn = document.getElementById('pdfPrevPage');
   const pdfNextBtn = document.getElementById('pdfNextPage');
@@ -908,6 +927,31 @@
     pdfPageInfo.textContent = pdfPaginaAtual + ' / ' + pdfDocAtual.numPages;
     pdfPrevBtn.disabled = pdfPaginaAtual <= 1;
     pdfNextBtn.disabled = pdfPaginaAtual >= pdfDocAtual.numPages;
+  }
+
+  // Desenha por cima do canvas os links que já existem dentro do PDF (ex.:
+  // "CLIQUE AQUI E FALE CONOSCO" pro WhatsApp, "ACESSE" pro site) — sem essa
+  // camada eles ficam só pixels da imagem, sem funcionar.
+  function renderizarLinksPdf(page, viewport){
+    pdfLinkLayer.innerHTML = '';
+    pdfLinkLayer.style.width = viewport.width + 'px';
+    pdfLinkLayer.style.height = viewport.height + 'px';
+    page.getAnnotations().then(function (anotacoes) {
+      anotacoes.forEach(function (ann) {
+        if (ann.subtype !== 'Link') return;
+        if (!ann.url) return;
+        const rect = pdfjsLib.Util.normalizeRect(viewport.convertToViewportRectangle(ann.rect));
+        const link = document.createElement('a');
+        link.href = ann.url;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.style.left = rect[0] + 'px';
+        link.style.top = rect[1] + 'px';
+        link.style.width = (rect[2] - rect[0]) + 'px';
+        link.style.height = (rect[3] - rect[1]) + 'px';
+        pdfLinkLayer.appendChild(link);
+      });
+    });
   }
 
   function renderizarPaginaPdf(numero){
@@ -929,6 +973,7 @@
           renderizarPaginaPdf(proxima);
         }
       });
+      renderizarLinksPdf(page, viewport);
     });
     atualizarNavPdf();
   }
