@@ -28,6 +28,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<!--
+  PDF.js (Mozilla): renderiza o PDF direto na página, em canvas, com um
+  visualizador próprio (só anterior/próxima página) — sem a barra de
+  ferramentas nativa do navegador (que traz ícones de baixar, imprimir e
+  salvar no Google Drive). É uma biblioteca leve e sem plugin equivalente
+  já instalado no WordPress, então não há risco do conflito de versões que
+  acontecia com o DearFlip.
+-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root{
     --azul-escuro:#002f4d;
@@ -470,6 +479,87 @@
   .footer-bottom a{color:rgba(255,255,255,0.55);}
   .footer-bottom a:hover{color:var(--amarelo);}
 
+  /* ---------- Visualizador de PDF (modal em tela cheia, sem toolbar nativa) ---------- */
+  .pdf-modal{
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    background:rgba(0,20,35,0.94);
+    display:none;
+    flex-direction:column;
+  }
+  .pdf-modal.open{display:flex;}
+  .pdf-modal-bar{
+    flex:none;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 16px;
+    background:var(--azul-escuro);
+    color:var(--branco);
+  }
+  .pdf-modal-hint{
+    font-size:13px;
+    color:rgba(255,255,255,0.85);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .pdf-modal-nav{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin:0 auto;
+  }
+  .pdf-modal-nav button{
+    width:34px;height:34px;
+    border-radius:8px;
+    border:none;
+    background:rgba(255,255,255,0.12);
+    color:var(--branco);
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .pdf-modal-nav button:hover{background:rgba(255,255,255,0.22);}
+  .pdf-modal-nav button:disabled{opacity:.35;cursor:not-allowed;}
+  .pdf-modal-nav span{font-size:13px;font-weight:600;min-width:52px;text-align:center;}
+  .pdf-modal-close{
+    flex:none;
+    width:36px;height:36px;
+    border-radius:8px;
+    border:none;
+    background:rgba(255,255,255,0.12);
+    color:var(--branco);
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .pdf-modal-close:hover{background:rgba(255,255,255,0.22);}
+  .pdf-modal-frame{
+    position:relative;
+    flex:1;
+    width:100%;
+    border:0;
+    background:#2b2f31;
+    overflow:auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+  }
+  .pdf-modal-frame canvas{
+    max-width:100%;
+    box-shadow:0 8px 30px rgba(0,0,0,0.45);
+  }
+  @media (max-width:600px){
+    .pdf-modal-hint{font-size:11.5px;}
+    .pdf-modal-nav{gap:10px;}
+  }
+
   /* ---------- Botão voltar ao topo ---------- */
   .back-to-top{
     position:fixed;
@@ -709,6 +799,21 @@
   </div>
 </footer>
 
+<div class="pdf-modal" id="pdfModal" role="dialog" aria-modal="true" aria-label="Visualizador do boletim em PDF">
+  <div class="pdf-modal-bar">
+    <span class="pdf-modal-hint">💡 Use dois dedos para dar zoom</span>
+    <div class="pdf-modal-nav">
+      <button type="button" id="pdfPrevPage" aria-label="Página anterior">‹</button>
+      <span id="pdfPageInfo">1 / 1</span>
+      <button type="button" id="pdfNextPage" aria-label="Próxima página">›</button>
+    </div>
+    <button type="button" class="pdf-modal-close" id="pdfModalClose" aria-label="Fechar visualizador">✕</button>
+  </div>
+  <div class="pdf-modal-frame" id="pdfFrame">
+    <canvas id="pdfCanvas"></canvas>
+  </div>
+</div>
+
 <button type="button" class="back-to-top" id="backToTop" aria-label="Voltar ao topo">↑</button>
 
 <script>
@@ -775,6 +880,99 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
+  // ---------- Visualizador de PDF (canvas, sem toolbar nativa) ----------
+  // Usa o PDF.js (carregado via CDN no <head>) pra desenhar cada página num
+  // <canvas> dentro do próprio modal. Como o navegador nunca abre o arquivo
+  // PDF diretamente, ele não mostra a própria barra de ferramentas (baixar,
+  // imprimir, salvar no Google Drive) — só os controles que a gente desenha
+  // aqui (anterior/próxima página).
+  if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+
+  const pdfModal = document.getElementById('pdfModal');
+  const pdfModalClose = document.getElementById('pdfModalClose');
+  const pdfCanvas = document.getElementById('pdfCanvas');
+  const pdfFrame = document.getElementById('pdfFrame');
+  const pdfPageInfo = document.getElementById('pdfPageInfo');
+  const pdfPrevBtn = document.getElementById('pdfPrevPage');
+  const pdfNextBtn = document.getElementById('pdfNextPage');
+
+  let pdfDocAtual = null;
+  let pdfPaginaAtual = 1;
+  let pdfRenderizando = false;
+  let pdfProximaPendente = null;
+
+  function atualizarNavPdf(){
+    if (!pdfDocAtual) return;
+    pdfPageInfo.textContent = pdfPaginaAtual + ' / ' + pdfDocAtual.numPages;
+    pdfPrevBtn.disabled = pdfPaginaAtual <= 1;
+    pdfNextBtn.disabled = pdfPaginaAtual >= pdfDocAtual.numPages;
+  }
+
+  function renderizarPaginaPdf(numero){
+    pdfRenderizando = true;
+    pdfDocAtual.getPage(numero).then(function (page) {
+      const ctx = pdfCanvas.getContext('2d');
+      const larguraDisponivel = pdfFrame.clientWidth - 32;
+      const alturaDisponivel = pdfFrame.clientHeight - 32;
+      const viewportBase = page.getViewport({ scale: 1 });
+      const escala = Math.min(larguraDisponivel / viewportBase.width, alturaDisponivel / viewportBase.height);
+      const viewport = page.getViewport({ scale: escala > 0 ? escala : 1 });
+      pdfCanvas.width = viewport.width;
+      pdfCanvas.height = viewport.height;
+      page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function () {
+        pdfRenderizando = false;
+        if (pdfProximaPendente !== null) {
+          const proxima = pdfProximaPendente;
+          pdfProximaPendente = null;
+          renderizarPaginaPdf(proxima);
+        }
+      });
+    });
+    atualizarNavPdf();
+  }
+
+  function irParaPaginaPdf(numero){
+    if (pdfRenderizando) {
+      pdfProximaPendente = numero;
+    } else {
+      renderizarPaginaPdf(numero);
+    }
+  }
+
+  function abrirVisualizador(url){
+    pdfModal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    pdfjsLib.getDocument(url).promise.then(function (doc) {
+      pdfDocAtual = doc;
+      pdfPaginaAtual = 1;
+      irParaPaginaPdf(pdfPaginaAtual);
+    });
+  }
+  function fecharVisualizador(){
+    pdfModal.classList.remove('open');
+    document.body.style.overflow = '';
+    pdfDocAtual = null;
+  }
+  pdfModalClose.addEventListener('click', fecharVisualizador);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharVisualizador(); });
+  pdfPrevBtn.addEventListener('click', () => {
+    if (!pdfDocAtual) return;
+    if (pdfPaginaAtual > 1) {
+      pdfPaginaAtual--;
+      irParaPaginaPdf(pdfPaginaAtual);
+    }
+  });
+  pdfNextBtn.addEventListener('click', () => {
+    if (!pdfDocAtual) return;
+    if (pdfPaginaAtual < pdfDocAtual.numPages) {
+      pdfPaginaAtual++;
+      irParaPaginaPdf(pdfPaginaAtual);
+    }
+  });
+  pdfCanvas.addEventListener('contextmenu', e => e.preventDefault());
+
   // ---------- Edições do boletim ----------
   // Adicione uma edição nova sempre no TOPO da lista (a mais recente primeiro).
   // arquivo: null enquanto o PDF não estiver pronto -> o card mostra "Em breve"
@@ -793,16 +991,16 @@
 
   // Gera o(s) botão(ões) "Visualizar" / "Baixar" para uma edição.
   // Passe incluirBaixar:false para gerar só o botão "Visualizar" (usado na hero).
-  // "Visualizar" abre o PDF direto numa nova aba, usando o visualizador nativo
-  // do navegador/dispositivo — sem plugin nenhum.
+  // "Visualizar" abre o modal com o PDF renderizado em canvas (PDF.js) — não
+  // abre o arquivo puro, então não aparece a barra nativa do navegador.
   function criarBotoes(ed, label, incluirBaixar){
     if (incluirBaixar === undefined) incluirBaixar = true;
     const disponivel = !!ed.arquivo;
     const arquivoSeguro = disponivel ? ed.arquivo : '#';
     const nomeArquivo = 'Boletim-do-Patrocinador-' + label.replace('/', '-') + '.pdf';
     const btnVisualizar = `
-      <a href="${arquivoSeguro}" class="btn btn-primary${disponivel ? '' : ' disabled'}"
-         ${disponivel ? `target="_blank" rel="noopener"` : 'aria-disabled="true" onclick="return false;"'}>Visualizar</a>`;
+      <a href="#" class="btn btn-primary${disponivel ? '' : ' disabled'}"
+         ${disponivel ? `onclick="abrirVisualizador('${arquivoSeguro}'); return false;"` : 'aria-disabled="true" onclick="return false;"'}>Visualizar</a>`;
     if (!incluirBaixar) return btnVisualizar;
     return btnVisualizar + `
       <a href="${arquivoSeguro}" class="btn btn-outline edicao-btn-outline${disponivel ? '' : ' disabled'}"
@@ -844,7 +1042,11 @@
       const heroPreviewPlaceholder = document.getElementById('heroPreviewPlaceholder');
       const heroPreviewImg = document.getElementById('heroPreviewImg');
 
-      if (disponivel && ultima.capa) {
+      let temCapa = false;
+      if (disponivel) {
+        if (ultima.capa) temCapa = true;
+      }
+      if (temCapa) {
         heroPreviewPlaceholder.style.display = 'none';
         heroPreviewImg.src = ultima.capa;
         heroPreviewImg.alt = 'Capa do boletim de ' + labelUltima;
